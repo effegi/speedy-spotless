@@ -1,10 +1,11 @@
 # Speedy Spotless
 
-**!!! This project is deprecated. See https://github.com/Cosium/git-code-format-maven-plugin for formatting Java code according to the Google Java Format.**
-
-For easy formatting of staged changes. Inspired by [pretty-quick](https://github.com/azz/pretty-quick).
+For easy formatting of staged changes. Inspired by [pretty-quick](https://github.com/azz/pretty-quick) and the now archived [commitd/speedy-spotless](https://github.com/commitd/speedy-spotless) plugin.
 
 It includes `apply` and `check` goals from Spotless Maven Plugin but also includes the new goal `staged` to trigger the formatting of files staged in Git.
+
+It can therefore be useda as a 100% drop-in replacement of `com.diffplug.spotless:spotless-maven-plugin`, with the added benefit of not having
+to duplicate the spotless configuration, and provides the most robust handling of staged files I've come across so far. `<ratchetFrom>` does help, but partially staging files still works like shit on staged 
 
 Works with Java 8+.
 
@@ -12,29 +13,25 @@ Works with Java 8+.
 
 Speedy Spotless supports the exact same configuration options as Spotless Maven Plugin.
 
-Additionally the `install-hooks` goal may be used to install a pre-commit Git hook to format staged files when committing.
-
 ```xml
 
 <build>
     <plugins>
       <plugin>
-        <groupId>io.committed</groupId>
+        <groupId>me.effegi</groupId>
         <artifactId>speedy-spotless-maven-plugin</artifactId>
-        <version>0.1.1</version>
-        <executions>
-          <execution>
-            <id>install-formatter-hook</id>
-            <goals>
-              <goal>install-hooks</goal>
-            </goals>
-          </execution>
-        </executions>
+        <version>0.1.5</version>
         <configuration>
+          <pom>
+            <sortPom>
+              <indentSchemaLocation>true</indentSchemaLocation>
+              <expandEmptyElements>false</expandEmptyElements>
+            </sortPom>
+          </pom>
           <java>
-            <googleJavaFormat>
+            <palantirJavaFormat>
               <style>GOOGLE</style>
-            </googleJavaFormat>
+            </palantirJavaFormat>
             <removeUnusedImports />
           </java>
         </configuration>
@@ -44,7 +41,7 @@ Additionally the `install-hooks` goal may be used to install a pre-commit Git ho
 
 ```
 
-Ensure the `install-hooks` goal is declared in your root POM.
+You might want to use a plugin like `com.rudikershaw.gitbuildhook:git-build-hook-maven-plugin` to invoke `speedy-spotless:staged` as a pre-commit hook.
 
 ## Configuration
 
