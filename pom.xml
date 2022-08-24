@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>me.effegi</groupId>
   <artifactId>speedy-spotless-maven-plugin</artifactId>
-  <version>0.1.6-SNAPSHOT</version>
+  <version>0.1.6</version>
   <packaging>maven-plugin</packaging>
   <name>speedy-spotless-maven-plugin</name>
   <description>For easy formatting of staged changes, or as drop-in for the spotless maven plugin.
@@ -31,7 +29,7 @@
   <scm>
     <connection>scm:git:http://github.com/effegi/speedy-spotless</connection>
     <developerConnection>scm:git:http://github.com/effegi/speedy-spotless</developerConnection>
-    <tag>@{project.version}</tag>
+    <tag>0.1.6</tag>
     <url>http://github.com/effegi/speedy-spotless</url>
   </scm>
 
