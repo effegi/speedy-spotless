@@ -16,9 +16,9 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>io.committed</groupId>
+				<groupId>me.effegi</groupId>
 				<artifactId>speedy-spotless-maven-plugin</artifactId>
-				<version>${speedy-spotless-maven-plugin.version}</version>
+				<version>0.1.6-SNAPSHOT</version>
 				<configuration>
 					<java>
 						<googleJavaFormat>
