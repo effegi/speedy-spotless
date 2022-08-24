@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.toList;
 
 import com.diffplug.spotless.Formatter;
 import com.diffplug.spotless.maven.SpotlessApplyMojo;
+import com.diffplug.spotless.maven.incremental.UpToDateChecker;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -32,7 +33,8 @@ public class StagedMojo extends SpotlessApplyMojo {
       asList(ChangeType.ADD, ChangeType.COPY, ChangeType.MODIFY, ChangeType.RENAME);
 
   @Override
-  protected void process(Iterable<File> files, Formatter formatter) throws MojoExecutionException {
+  protected void process(Iterable<File> files, Formatter formatter, UpToDateChecker upToDateChecker)
+      throws MojoExecutionException {
     if (!files.iterator().hasNext()) {
       return;
     }
@@ -71,7 +73,7 @@ public class StagedMojo extends SpotlessApplyMojo {
                   filePath ->
                       repository.getDirectory().getParentFile().toPath().resolve(filePath).toFile())
               .collect(toList());
-      super.process(stagedFiles, formatter);
+      super.process(stagedFiles, formatter, upToDateChecker);
       getLog().info("Formatted " + stagedFiles.size() + " staged files");
 
       for (String f : fullyStagedFiles) {
@@ -144,4 +146,18 @@ public class StagedMojo extends SpotlessApplyMojo {
       throw new MojoExecutionException("Failed to list changed files", e);
     }
   }
+
+  private static final UpToDateChecker NO_OP_UP_TO_DATE_CHECKER =
+      new UpToDateChecker() {
+        @Override
+        public boolean isUpToDate(Path path) {
+          return false;
+        }
+
+        @Override
+        public void setUpToDate(Path path) {}
+
+        @Override
+        public void close() {}
+      };
 }
