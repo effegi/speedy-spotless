@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>me.effegi</groupId>
   <artifactId>speedy-spotless-maven-plugin</artifactId>
-  <version>0.1.7-SNAPSHOT</version>
+  <version>0.1.7</version>
   <packaging>maven-plugin</packaging>
   <name>speedy-spotless-maven-plugin</name>
   <description>For easy formatting of staged changes, or as drop-in for the spotless maven plugin.
@@ -29,7 +29,7 @@
   <scm>
     <connection>scm:git:http://github.com/effegi/speedy-spotless</connection>
     <developerConnection>scm:git:http://github.com/effegi/speedy-spotless</developerConnection>
-    <tag>@{project.version}</tag>
+    <tag>0.1.7</tag>
     <url>http://github.com/effegi/speedy-spotless</url>
   </scm>
 
