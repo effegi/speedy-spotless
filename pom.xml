@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>me.effegi</groupId>
   <artifactId>speedy-spotless-maven-plugin</artifactId>
-  <version>0.1.8</version>
+  <version>0.1.9</version>
   <packaging>maven-plugin</packaging>
   <name>speedy-spotless-maven-plugin</name>
   <description>For easy formatting of staged changes, or as drop-in for the spotless maven plugin.
@@ -49,18 +51,21 @@
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <spotless-maven-plugin.version>2.34.0</spotless-maven-plugin.version>
+    <spotless-lib.version>2.38.0</spotless-lib.version>
+    <maven-api.version>3.8.8</maven-api.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>com.diffplug.spotless</groupId>
       <artifactId>spotless-maven-plugin</artifactId>
-      <version>2.27.2</version>
+      <version>${spotless-maven-plugin.version}</version>
     </dependency>
     <dependency>
       <groupId>com.diffplug.spotless</groupId>
       <artifactId>spotless-lib</artifactId>
-      <version>2.30.0</version>
+      <version>${spotless-lib.version}</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jgit</groupId>
@@ -70,7 +75,19 @@
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-plugin-api</artifactId>
-      <version>3.8.5</version>
+      <version>${maven-api.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-model</artifactId>
+      <version>${maven-api.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-artifact</artifactId>
+      <version>${maven-api.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -83,6 +100,7 @@
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-project</artifactId>
       <version>2.2.1</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
@@ -104,16 +122,43 @@
   </dependencies>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.11.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>versions-maven-plugin</artifactId>
+          <version>2.15.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.2.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-plugin-plugin</artifactId>
+          <version>3.9.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-plugin-plugin</artifactId>
-        <version>3.6.4</version>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>3.2.1</version>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -125,8 +170,12 @@
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>3.1.0</version>
         <configuration>
           <executable>bash</executable>
           <arguments>
@@ -161,7 +210,10 @@
           <goals>deploy</goals>
         </configuration>
       </plugin>
-
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
     </plugins>
   </build>
 
