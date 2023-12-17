@@ -11,14 +11,14 @@
 	</modules>
 	<packaging>pom</packaging>
 	<properties>
-		<speedy-spotless-maven-plugin.version>0.1.2</speedy-spotless-maven-plugin.version>
+		<speedy-spotless-maven-plugin.version>0.1.10</speedy-spotless-maven-plugin.version>
 	</properties>
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>me.effegi</groupId>
 				<artifactId>speedy-spotless-maven-plugin</artifactId>
-				<version>0.1.6-SNAPSHOT</version>
+				<version>${speedy-spotless-maven-plugin.version}</version>
 				<configuration>
 					<upToDateChecking>
 						<enabled>false</enabled>

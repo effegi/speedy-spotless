@@ -5,9 +5,10 @@ For easy formatting of staged changes. Inspired by [pretty-quick](https://github
 It includes `apply` and `check` goals from Spotless Maven Plugin but also includes the new goal `staged` to trigger the formatting of files staged in Git.
 
 It can therefore be useda as a 100% drop-in replacement of `com.diffplug.spotless:spotless-maven-plugin`, with the added benefit of not having
-to duplicate the spotless configuration, and provides the most robust handling of staged files I've come across so far. `<ratchetFrom>` does help, but partially staging files still works like shit on staged 
+to duplicate the spotless configuration, and provides the most robust handling of staged files I've come across so far. 
+`<ratchetFrom>` does help, but partially staged files still cause issues and will result in a messed up commit.
 
-Works with Java 8+.
+Works with Java 11+. For java 8, use version up to 0.1.9.
 
 ## Installation
 
@@ -20,7 +21,7 @@ Speedy Spotless supports the exact same configuration options as Spotless Maven 
       <plugin>
         <groupId>me.effegi</groupId>
         <artifactId>speedy-spotless-maven-plugin</artifactId>
-        <version>0.1.5</version>
+        <version>0.1.10</version>
         <configuration>
           <pom>
             <sortPom>
@@ -49,7 +50,7 @@ See [Spotless Maven Plugin](https://github.com/diffplug/spotless/tree/master/plu
 
 ## Caveats
 
-- Currently only Java files are formatted. Spotless's `spotlessFiles` option is ignored.
+- Spotless's `spotlessFiles` option is ignored.
 
 ## Building
 

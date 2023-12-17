@@ -38,7 +38,7 @@ git add .
 
 # run formatter from child module
 pushd child
-mvn -X "me.effegi:speedy-spotless-maven-plugin:${SPEEDY_VERSION}:staged"
+mvn -B "me.effegi:speedy-spotless-maven-plugin:${SPEEDY_VERSION}:staged"
 popd
 
 echo $ROOT_DIR
