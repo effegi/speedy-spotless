@@ -20,6 +20,9 @@
 				<artifactId>speedy-spotless-maven-plugin</artifactId>
 				<version>0.1.6-SNAPSHOT</version>
 				<configuration>
+					<upToDateChecking>
+						<enabled>false</enabled>
+					</upToDateChecking>
 					<java>
 						<googleJavaFormat>
 							<style>GOOGLE</style>
