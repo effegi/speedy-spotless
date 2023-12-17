@@ -1,30 +1,37 @@
 package io.committed.speedy.format;
 
-import static java.lang.String.format;
-import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
-
 import com.diffplug.spotless.Formatter;
 import com.diffplug.spotless.maven.SpotlessApplyMojo;
 import com.diffplug.spotless.maven.incremental.UpToDateChecker;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.filter.PathFilterGroup;
 import org.eclipse.jgit.treewalk.filter.TreeFilter;
+
+import static java.lang.String.format;
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 
 @Mojo(name = "staged", threadSafe = true)
 public class StagedMojo extends SpotlessApplyMojo {
@@ -53,7 +60,7 @@ public class StagedMojo extends SpotlessApplyMojo {
 
       List<String> stagedChangedFiles = getChangedFiles(git, true, treeFilter);
       if (stagedChangedFiles.isEmpty()) {
-        getLog().debug("No files were formatted for this formatter");
+        getLog().debug("No files were changed for this formatter");
         return;
       }
       List<String> unstagedChangedFiles = getChangedFiles(git, false, treeFilter);
@@ -143,10 +150,21 @@ public class StagedMojo extends SpotlessApplyMojo {
           .map(DiffEntry::getNewPath)
           .collect(toList());
     } catch (GitAPIException e) {
+      if (!hasCommits(git)) {
+        throw new MojoExecutionException("Looks like you're executing this on a first commit. Please run 'mvn me.effegi.speedy-spotless-maven-plugin:apply' and then commit with the -n option if you're invoking this from a pre-commit hook.");
+      }
       throw new MojoExecutionException("Failed to list changed files", e);
     }
   }
 
+  private static boolean hasCommits(Git git) {
+    try {
+      Collection<ReflogEntry> reflog = git.reflog().call();
+      return !reflog.isEmpty();
+    } catch (GitAPIException e) {
+      return false;
+    }
+  }
   private static final UpToDateChecker NO_OP_UP_TO_DATE_CHECKER =
       new UpToDateChecker() {
         @Override
@@ -155,9 +173,11 @@ public class StagedMojo extends SpotlessApplyMojo {
         }
 
         @Override
-        public void setUpToDate(Path path) {}
+        public void setUpToDate(Path path) {
+        }
 
         @Override
-        public void close() {}
+        public void close() {
+        }
       };
 }
