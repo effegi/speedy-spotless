@@ -40,7 +40,7 @@ public class StagedMojo extends SpotlessApplyMojo {
       asList(ChangeType.ADD, ChangeType.COPY, ChangeType.MODIFY, ChangeType.RENAME);
 
   @Override
-  protected void process(Iterable<File> files, Formatter formatter, UpToDateChecker upToDateChecker)
+  protected void process(String name, Iterable<File> files, Formatter formatter, UpToDateChecker upToDateChecker)
       throws MojoExecutionException {
     if (!files.iterator().hasNext()) {
       return;
@@ -80,7 +80,7 @@ public class StagedMojo extends SpotlessApplyMojo {
                   filePath ->
                       repository.getDirectory().getParentFile().toPath().resolve(filePath).toFile())
               .collect(toList());
-      super.process(stagedFiles, formatter, upToDateChecker);
+      super.process(name, stagedFiles, formatter, upToDateChecker);
       getLog().info("Formatted " + stagedFiles.size() + " staged files");
 
       for (String f : fullyStagedFiles) {

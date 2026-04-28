@@ -23,6 +23,9 @@ Speedy Spotless supports the exact same configuration options as Spotless Maven 
         <artifactId>speedy-spotless-maven-plugin</artifactId>
         <version>0.1.10</version>
         <configuration>
+          <upToDateChecking>
+            <enabled>false</enabled>
+          </upToDateChecking>
           <pom>
             <sortPom>
               <indentSchemaLocation>true</indentSchemaLocation>

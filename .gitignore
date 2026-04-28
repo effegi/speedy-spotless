@@ -21,3 +21,4 @@ target/
 # Deployment package
 deployment-package
 canary-deployment-*.zip
+.mvndeps
