@@ -8,7 +8,7 @@ It can therefore be useda as a 100% drop-in replacement of `com.diffplug.spotles
 to duplicate the spotless configuration, and provides the most robust handling of staged files I've come across so far. 
 `<ratchetFrom>` does help, but partially staged files still cause issues and will result in a messed up commit.
 
-Works with Java 11+. For java 8, use version up to 0.1.9.
+Works with Java 17+. For java 8, use version up to 0.1.9.
 
 ## Installation
 
@@ -21,7 +21,7 @@ Speedy Spotless supports the exact same configuration options as Spotless Maven 
       <plugin>
         <groupId>me.effegi</groupId>
         <artifactId>speedy-spotless-maven-plugin</artifactId>
-        <version>0.1.10</version>
+        <version>0.1.13</version>
         <configuration>
           <upToDateChecking>
             <enabled>false</enabled>
