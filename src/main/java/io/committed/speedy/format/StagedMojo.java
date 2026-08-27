@@ -7,8 +7,6 @@ import com.diffplug.spotless.maven.incremental.UpToDateChecker;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -22,8 +20,8 @@ import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.filter.PathFilterGroup;
@@ -31,6 +29,7 @@ import org.eclipse.jgit.treewalk.filter.TreeFilter;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 @Mojo(name = "staged", threadSafe = true)
@@ -49,12 +48,17 @@ public class StagedMojo extends SpotlessApplyMojo {
     try (Git git = openGitRepo()) {
 
       Repository repository = git.getRepository();
-      Path workTreePath = repository.getWorkTree().toPath();
+      // Canonical on both sides: jgit resolves symlinks in the work tree path while Maven keeps
+      // the path it was given, and on macOS /tmp and /var are symlinks. Relativizing the two
+      // forms against each other yields ../.. paths that match nothing, so the goal would
+      // quietly format nothing at all.
+      Path workTreePath = canonical(repository.getWorkTree().toPath());
 
       TreeFilter treeFilter =
           PathFilterGroup.createFromStrings(
               StreamSupport.stream(files.spliterator(), false)
-                  .map(f -> workTreePath.relativize(f.toPath()))
+                  .map(f -> canonical(f.toPath()))
+                  .map(workTreePath::relativize)
                   .map(f -> f.toString().replace('\\', '/'))
                   .collect(Collectors.toList()));
 
@@ -76,9 +80,9 @@ public class StagedMojo extends SpotlessApplyMojo {
 
       List<File> stagedFiles =
           stagedChangedFiles.stream()
-              .map(
-                  filePath ->
-                      repository.getDirectory().getParentFile().toPath().resolve(filePath).toFile())
+              // Resolve against the working tree, not the git directory's parent: for linked
+              // worktrees and submodules the git directory lives outside the checkout.
+              .map(filePath -> workTreePath.resolve(filePath).toFile())
               .collect(toList());
       super.process(name, stagedFiles, formatter, upToDateChecker);
       getLog().info("Formatted " + stagedFiles.size() + " staged files");
@@ -94,19 +98,32 @@ public class StagedMojo extends SpotlessApplyMojo {
     }
   }
 
-  private Git openGitRepo() throws IOException {
-    File cwd = Paths.get("").toFile().getAbsoluteFile();
+  /** Resolves symlinks so work tree and file paths can be compared. */
+  private static Path canonical(Path path) {
     try {
-      return Git.open(cwd);
+      return path.toRealPath();
+    } catch (IOException e) {
+      // The file came from the formatter's own scan so it should exist; degrade rather than fail.
+      return path.toAbsolutePath().normalize();
+    }
+  }
+
+  private Git openGitRepo() throws IOException {
+    // The module's own directory, not the directory Maven was launched from: with -f the two
+    // can sit in different repositories, and searching from the wrong one silently finds
+    // nothing to format.
+    File projectDir = baseDir.getAbsoluteFile();
+    try {
+      return Git.open(projectDir);
     } catch (IOException e) {
       FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
-      repositoryBuilder.findGitDir(cwd);
+      repositoryBuilder.findGitDir(projectDir);
       File gitDir = repositoryBuilder.getGitDir();
       if (gitDir != null) {
         return Git.open(gitDir);
       } else {
         throw new IOException(
-            "Could not find git directory scanning upwards from " + cwd.getPath());
+            "Could not find git directory scanning upwards from " + projectDir.getPath());
       }
     }
   }
@@ -115,8 +132,13 @@ public class StagedMojo extends SpotlessApplyMojo {
       throws MojoExecutionException {
     throw new MojoExecutionException(
         format(
-            "Partially staged files were formatted but not re-staged:%n%s",
-            String.join("\\n", partiallyStagedFiles)));
+            "Partially staged files were formatted but not re-staged:%n%s%n"
+                + "Re-stage them with 'git add' and commit again.",
+            // Sorted so the message is stable between runs: the set is a HashSet.
+            partiallyStagedFiles.stream()
+                .sorted()
+                .map(f -> "  " + f)
+                .collect(joining(System.lineSeparator()))));
   }
 
   private void stage(Git git, String f) throws MojoExecutionException {
@@ -150,34 +172,24 @@ public class StagedMojo extends SpotlessApplyMojo {
           .map(DiffEntry::getNewPath)
           .collect(toList());
     } catch (GitAPIException e) {
-      if (!hasCommits(git)) {
-        throw new MojoExecutionException("Looks like you're executing this on a first commit. Please run 'mvn me.effegi.speedy-spotless-maven-plugin:apply' and then commit with the -n option if you're invoking this from a pre-commit hook.");
+      if (!hasCommits(git.getRepository())) {
+        throw new MojoExecutionException(
+            "Looks like you're executing this on a first commit."
+                + " Please run 'mvn me.effegi:speedy-spotless-maven-plugin:apply'"
+                + " and then commit with the -n option if you're invoking this from a"
+                + " pre-commit hook.");
       }
       throw new MojoExecutionException("Failed to list changed files", e);
     }
   }
 
-  private static boolean hasCommits(Git git) {
+  private static boolean hasCommits(Repository repository) {
     try {
-      Collection<ReflogEntry> reflog = git.reflog().call();
-      return !reflog.isEmpty();
-    } catch (GitAPIException e) {
+      // Ask whether HEAD resolves, rather than whether a reflog exists: the reflog can be empty
+      // in a repository full of commits, and non-empty on an unborn branch after --orphan.
+      return repository.resolve(Constants.HEAD) != null;
+    } catch (IOException e) {
       return false;
     }
   }
-  private static final UpToDateChecker NO_OP_UP_TO_DATE_CHECKER =
-      new UpToDateChecker() {
-        @Override
-        public boolean isUpToDate(Path path) {
-          return false;
-        }
-
-        @Override
-        public void setUpToDate(Path path) {
-        }
-
-        @Override
-        public void close() {
-        }
-      };
 }

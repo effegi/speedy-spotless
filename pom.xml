@@ -53,6 +53,9 @@
     <spotless-maven-plugin.version>3.10.1</spotless-maven-plugin.version>
     <spotless-lib.version>4.10.1</spotless-lib.version>
     <maven-api.version>3.9.15</maven-api.version>
+    <junit.version>6.0.3</junit.version>
+    <!-- Test-scope only: keep in step with the slf4j-api pulled in by jgit. -->
+    <slf4j.version>2.0.17</slf4j.version>
   </properties>
   <dependencies>
     <dependency>
@@ -111,9 +114,18 @@
       <version>3.20.0</version>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.13.2</version>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- The tests drive jgit in-process, which logs through slf4j. Without a provider slf4j warns
+         and drops the output. Must stay test-scoped: this artifact is a Maven plugin, and shipping
+         a binding would clash with Maven's own maven-slf4j-provider. -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>${slf4j.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -141,9 +153,14 @@
           <version>3.10.2</version>
         </plugin>
         <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>exec-maven-plugin</artifactId>
-          <version>3.6.3</version>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>3.5.6</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>3.1.4</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -173,25 +190,39 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>versions-maven-plugin</artifactId>
       </plugin>
+      <!-- The integration tests invoke Maven against this plugin, so the artifact has to be
+           resolvable from the local repository before they run. -->
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>install-for-integration-tests</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>install</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <executable>bash</executable>
-          <arguments>
-            <argument>-c</argument>
-            <argument>'./test.sh'</argument>
-          </arguments>
+          <systemPropertyVariables>
+            <speedy.version>${project.version}</speedy.version>
+            <maven.home>${maven.home}</maven.home>
+            <spotless.version>${spotless-maven-plugin.version}</spotless.version>
+            <!-- Quiet in the happy path, but jgit warnings still surface on failure. -->
+            <org.slf4j.simpleLogger.defaultLogLevel>warn</org.slf4j.simpleLogger.defaultLogLevel>
+          </systemPropertyVariables>
         </configuration>
         <executions>
           <execution>
-            <phase>test</phase>
             <goals>
-              <goal>exec</goal>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
             </goals>
-            <configuration>
-              <skip>${skipTests}</skip>
-            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -210,6 +241,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
           <release>${java.version}</release>
+          <!-- The plugin itself is published at ${java.version}; tests are free to use 17. -->
+          <testRelease>17</testRelease>
         </configuration>
       </plugin>
     </plugins>

@@ -53,7 +53,50 @@ See [Spotless Maven Plugin](https://github.com/diffplug/spotless/tree/master/plu
 
 ## Caveats
 
-- Spotless's `spotlessFiles` option is ignored.
+### Up-to-date checking must be configured
+
+Spotless' incremental up-to-date checking identifies a build by looking up
+`com.diffplug.spotless:spotless-maven-plugin` in the project. This plugin is published under
+different coordinates, so with the default configuration every goal - `staged`, `apply` and
+`check` alike - fails before doing any work:
+
+```
+Spotless plugin absent from the project: MavenProject: ...
+```
+
+This happens inside Spotless' own `execute()`, which is `final`, so the plugin cannot catch it
+and offer a better message. Pick one of two fixes.
+
+Disable up-to-date checking, as in the example above:
+
+```xml
+<upToDateChecking>
+  <enabled>false</enabled>
+</upToDateChecking>
+```
+
+Or, to keep caching, declare Spotless in `<pluginManagement>`. It is never executed from there;
+it only has to be present for the lookup to resolve. Cache invalidation still works correctly,
+because the fingerprint is computed from the configured formatters rather than from the declared
+plugin:
+
+```xml
+<pluginManagement>
+  <plugins>
+    <plugin>
+      <groupId>com.diffplug.spotless</groupId>
+      <artifactId>spotless-maven-plugin</artifactId>
+      <version>3.10.1</version>
+    </plugin>
+  </plugins>
+</pluginManagement>
+```
+
+### Parallel builds
+
+The `staged` goal writes to the git index, which every module in a reactor shares. Under
+`mvn -T` the modules contend on `.git/index.lock` and most of them fail, having formatted the
+working tree without updating the index. Run the goal without `-T`.
 
 ## Building
 
@@ -63,6 +106,11 @@ mvn clean package
 
 # Installing the maven plugin
 mvn clean install -DskipTests
+
+# Running the integration tests
+# Each test builds a throwaway git repository and runs the staged goal against it
+# with a real Maven process, so this installs the plugin locally first.
+mvn clean verify
 ```
 
 ## Deploying to Maven Central
